@@ -1,4 +1,19 @@
+.topbar-notification-container {
+    margin: 0 6px;
+    spacing: 2px;
+}
+
 .topbar-notification-icon {
     padding: 3px;
     margin: 0;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.topbar-notification-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.topbar-notification-icon:active {
+    background-color: rgba(255, 255, 255, 0.2);
 }

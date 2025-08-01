@@ -7,62 +7,110 @@ import {
   gettext as _,
 } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
 
-export default class ExamplePreferences extends ExtensionPreferences {
+export default class NotificationIconsPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
-    const page = new Adw.PreferencesPage({
+    // General Settings Page
+    const generalPage = new Adw.PreferencesPage({
       title: _("General"),
       icon_name: "dialog-information-symbolic",
     });
-    window.add(page);
+    window.add(generalPage);
 
-    const group = new Adw.PreferencesGroup({
-      title: _("Configuration"),
-      description: _("Configure the extension"),
+    const appearanceGroup = new Adw.PreferencesGroup({
+      title: _("Appearance"),
+      description: _("Customize the appearance of notification icons"),
     });
-    page.add(group);
+    generalPage.add(appearanceGroup);
 
-    const row = new Adw.SwitchRow({
-      title: _("Right Side"),
-      subtitle: _("Whether to show icons on the right side"),
+    // Icon Size Setting
+    const iconSizeOptions = new Gtk.StringList();
+    iconSizeOptions.append(_("Small (16px)"));
+    iconSizeOptions.append(_("Medium (18px)"));
+    iconSizeOptions.append(_("Large (20px)"));
+
+    const iconSizeRow = new Adw.ComboRow({
+      title: _("Icon Size"),
+      subtitle: _("Choose the size of notification icons"),
+      model: iconSizeOptions,
     });
-    group.add(row);
+    appearanceGroup.add(iconSizeRow);
 
-    const row2 = new Adw.SwitchRow({
+    // Colored Icons Setting
+    const coloredIconsRow = new Adw.SwitchRow({
       title: _("Colored Icons"),
-      subtitle: _("Toggles between symbolic and colored icons"),
+      subtitle: _("Show colored icons instead of symbolic (monochrome) icons"),
     });
-    group.add(row2);
+    appearanceGroup.add(coloredIconsRow);
 
-    const options = new Gtk.StringList();
-    options.append(_("Always"));
-    options.append(_("Urgent"));
-    options.append(_("Never"));
-
-    const comboRow = new Adw.ComboRow({
-      title: _("DND Mode"),
-      subtitle: _("Show icons when do no disturb is on"),
-      model: options,
+    // Position Settings Group
+    const positionGroup = new Adw.PreferencesGroup({
+      title: _("Position"),
+      description: _("Configure where notification icons appear"),
     });
-    group.add(comboRow);
+    generalPage.add(positionGroup);
 
+    // Right Side Setting
+    const rightSideRow = new Adw.SwitchRow({
+      title: _("Right Side"),
+      subtitle: _("Show icons on the right side of the clock instead of left"),
+    });
+    positionGroup.add(rightSideRow);
+
+    // Behavior Settings Group
+    const behaviorGroup = new Adw.PreferencesGroup({
+      title: _("Behavior"),
+      description: _("Configure how icons behave in different modes"),
+    });
+    generalPage.add(behaviorGroup);
+
+    // DND Mode Setting
+    const dndOptions = new Gtk.StringList();
+    dndOptions.append(_("Always Show"));
+    dndOptions.append(_("Urgent Only"));
+    dndOptions.append(_("Never Show"));
+
+    const dndRow = new Adw.ComboRow({
+      title: _("Do Not Disturb Mode"),
+      subtitle: _("Choose when to show icons when Do Not Disturb is active."),
+      model: dndOptions,
+    });
+    behaviorGroup.add(dndRow);
+
+    // Bind settings
     window._settings = this.getSettings();
+    
+    // Icon size binding (0=16px, 1=18px, 2=20px)
     window._settings.bind(
-      "right-side",
-      row,
-      "active",
-      Gio.SettingsBindFlags.DEFAULT
-    );
-    window._settings.bind(
-      "colored-icons",
-      row2,
-      "active",
-      Gio.SettingsBindFlags.DEFAULT
-    );
-    window._settings.bind(
-      "dnd-mode",
-      comboRow,
+      "icon-size",
+      iconSizeRow,
       "selected",
       Gio.SettingsBindFlags.DEFAULT
     );
+
+    // Colored icons binding
+    window._settings.bind(
+      "colored-icons",
+      coloredIconsRow,
+      "active",
+      Gio.SettingsBindFlags.DEFAULT
+    );
+
+    // Right side binding
+    window._settings.bind(
+      "right-side",
+      rightSideRow,
+      "active",
+      Gio.SettingsBindFlags.DEFAULT
+    );
+
+    // DND mode binding
+    window._settings.bind(
+      "dnd-mode",
+      dndRow,
+      "selected",
+      Gio.SettingsBindFlags.DEFAULT
+    );
+
+
   }
 }
