@@ -17,6 +17,7 @@
  */
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
@@ -167,7 +168,7 @@ const TopbarNotification = GObject.registerClass(
         _onSourceAdded(tray, source) {
             
             try {
-                if (!source || !source._policy || source._policy.id === 'generic') {
+                if (!source || !source._policy) {
                     return;
                 }
 
@@ -211,8 +212,11 @@ const TopbarNotification = GObject.registerClass(
             const iconSizeMap = [16, 18, 20];
             const actualIconSize = iconSizeMap[this._iconSize] || 18;
             
+            // Get the appropriate icon for the source
+            let iconName = this._getIconForSource(source);
+            
             const icon = new St.Icon({
-                icon_name: source._policy.id,
+                icon_name: iconName,
                 icon_size: actualIconSize,
                 style_class: 'topbar-notification-icon',
             });
@@ -230,6 +234,41 @@ const TopbarNotification = GObject.registerClass(
             });
 
             return icon;
+        }
+
+        _getIconForSource(source) {
+            try {
+                const sourceId = source._policy.id;
+                
+                // For generic notifications, use a default notification icon
+                if (sourceId === 'generic') {
+                    return 'notification-symbolic';
+                }
+                
+                // For system notifications, use system icon
+                if (sourceId === 'system') {
+                    return 'system-run-symbolic';
+                }
+                
+                // For application notifications, try to use the source's icon
+                if (source.icon) {
+                    // If source has a themed icon, use its name
+                    if (source.icon instanceof Gio.ThemedIcon) {
+                        return source.icon.get_names()[0] || 'application-x-executable-symbolic';
+                    }
+                    // If source has an icon name
+                    if (source.iconName) {
+                        return source.iconName;
+                    }
+                }
+                
+                // Fallback to source ID as icon name
+                return sourceId;
+                
+            } catch (error) {
+                console.error(`[TopbarNotificationIcons] Failed to get icon for source: ${error.message}`);
+                return 'notification-symbolic';
+            }
         }
 
         _onIconClicked(source) {
@@ -323,8 +362,9 @@ const TopbarNotification = GObject.registerClass(
                 // Check if the source has any urgent notifications
                 if (source.notifications && source.notifications.length > 0) {
                     return source.notifications.some(notification => {
-                        if (notification._urgency === 2) {
-                            return true; // Critical urgency - always show
+                        // Check for HIGH (2) or CRITICAL (3) urgency notifications
+                        if (notification._urgency === 2 || notification._urgency === 3) {
+                            return true; // High/Critical urgency - always show
                         }
                         
                         return false;
