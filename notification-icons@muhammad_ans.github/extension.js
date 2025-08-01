@@ -1,21 +1,3 @@
-/* extension.js
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
-
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import Clutter from 'gi://Clutter';
@@ -37,7 +19,6 @@ export default class TopbarNotificationIcons extends Extension {
             this._settings = this.getSettings();
             this._topbarNotification = new TopbarNotification(this._settings);
             
-            // Connect to settings changes
             this._signals = [
                 this._settings.connect('changed::right-side', this._onSettingsChanged.bind(this)),
                 this._settings.connect('changed::colored-icons', this._onSettingsChanged.bind(this)),
@@ -53,7 +34,6 @@ export default class TopbarNotificationIcons extends Extension {
 
     disable() {
         try {
-            // Disconnect signals
             if (this._signals) {
                 this._signals.forEach(signal => {
                     if (signal) {
@@ -63,7 +43,6 @@ export default class TopbarNotificationIcons extends Extension {
                 this._signals = [];
             }
 
-            // Destroy notification widget
             if (this._topbarNotification) {
                 this._topbarNotification.destroy();
                 this._topbarNotification = null;
@@ -77,7 +56,6 @@ export default class TopbarNotificationIcons extends Extension {
 
     _onSettingsChanged() {
         try {
-            // Update the notification widget with new settings
             if (this._topbarNotification) {
                 this._topbarNotification.updateSettings();
                 this._repositionWidget();
@@ -117,7 +95,6 @@ export default class TopbarNotificationIcons extends Extension {
             const rightSide = this._settings.get_boolean('right-side');
             const container = dateMenu.get_first_child();
             
-            // Remove and reinsert to change position
             container.remove_child(this._topbarNotification);
             
             if (rightSide) {
@@ -142,7 +119,7 @@ const TopbarNotification = GObject.registerClass(
             });
 
             this._settings = settings;
-            this._icons = new Map(); // Track icons by source ID
+            this._icons = new Map();
             this._signals = [];
             this._dndSignals = [];
             this._dndMode = this._settings.get_int('dnd-mode');
@@ -161,12 +138,10 @@ const TopbarNotification = GObject.registerClass(
                 Main.messageTray.connect('source-removed', this._onSourceRemoved.bind(this)),
             ];
 
-            // Monitor DND state changes
             this._monitorDndState();
         }
 
         _onSourceAdded(tray, source) {
-            
             try {
                 if (!source || !source._policy) {
                     return;
@@ -174,7 +149,6 @@ const TopbarNotification = GObject.registerClass(
 
                 const sourceId = source._policy.id;
                 
-                // Check DND mode
                 if (!this._shouldShowInDND(source)) {
                     return;
                 }
@@ -208,11 +182,9 @@ const TopbarNotification = GObject.registerClass(
         }
 
         _createIcon(source) {
-            // Map icon size setting to actual pixel values
             const iconSizeMap = [16, 18, 20];
             const actualIconSize = iconSizeMap[this._iconSize] || 18;
             
-            // Get the appropriate icon for the source
             let iconName = this._getIconForSource(source);
             
             const icon = new St.Icon({
@@ -221,49 +193,42 @@ const TopbarNotification = GObject.registerClass(
                 style_class: 'topbar-notification-icon',
             });
 
-            // Apply styling based on settings
             if (!this._coloredIcons) {
                 icon.add_style_class_name('app-menu-icon');
                 icon.add_effect(new Clutter.DesaturateEffect());
             }
 
-            // Add click handler to show notification
-            icon.connect('button-press-event', () => {
-                this._onIconClicked(source);
-                return Clutter.EVENT_STOP;
-            });
 
             return icon;
         }
 
         _getIconForSource(source) {
             try {
-                const sourceId = source._policy.id;
-                
-                // For generic notifications, use a default notification icon
-                if (sourceId === 'generic') {
-                    return 'notification-symbolic';
+                if (source.notifications && source.notifications.length > 0) {
+                    const notification = source.notifications[0];
+                    
+                    if (notification.gicon) {
+                        if (notification.gicon instanceof Gio.ThemedIcon) {
+                            return notification.gicon.get_names()[0];
+                        }
+                    }
+                    
+                    if (notification.iconName) {
+                        return notification.iconName;
+                    }
                 }
                 
-                // For system notifications, use system icon
-                if (sourceId === 'system') {
-                    return 'system-run-symbolic';
-                }
-                
-                // For application notifications, try to use the source's icon
                 if (source.icon) {
-                    // If source has a themed icon, use its name
                     if (source.icon instanceof Gio.ThemedIcon) {
-                        return source.icon.get_names()[0] || 'application-x-executable-symbolic';
-                    }
-                    // If source has an icon name
-                    if (source.iconName) {
-                        return source.iconName;
+                        return source.icon.get_names()[0];
                     }
                 }
                 
-                // Fallback to source ID as icon name
-                return sourceId;
+                if (source.iconName) {
+                    return source.iconName;
+                }
+                
+                return 'notification-symbolic';
                 
             } catch (error) {
                 console.error(`[TopbarNotificationIcons] Failed to get icon for source: ${error.message}`);
@@ -271,20 +236,9 @@ const TopbarNotification = GObject.registerClass(
             }
         }
 
-        _onIconClicked(source) {
-            try {
-                // Show the notification source
-                if (source && source.showBanner) {
-                    source.showBanner();
-                }
-            } catch (error) {
-                console.error(`[TopbarNotificationIcons] Failed to handle icon click: ${error.message}`);
-            }
-        }
 
         _monitorDndState() {
             try {
-                // Monitor DND state changes using GSettings
                 const Gio = imports.gi.Gio;
                 const settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.notifications' });
                 
@@ -292,14 +246,10 @@ const TopbarNotification = GObject.registerClass(
                     settings.connect('changed::show-banners', this._onDndStateChanged.bind(this))
                 ];
                 
-                // Store settings reference
                 this._dndSettings = settings;
-                
-                // Initial DND state
                 this._updateDndState();
             } catch (error) {
                 console.error(`[TopbarNotificationIcons] Failed to monitor DND state: ${error.message}`);
-                // Fallback: don't monitor DND if it fails
                 this._dndSignals = [];
             }
         }
@@ -308,23 +258,19 @@ const TopbarNotification = GObject.registerClass(
             try {
                 const wasDndActive = this._isDndActive;
                 
-                // Check DND state using GSettings
                 if (this._dndSettings) {
                     this._isDndActive = !this._dndSettings.get_boolean('show-banners');
                 } else {
-                    // Fallback: check directly
                     const Gio = imports.gi.Gio;
                     const settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.notifications' });
                     this._isDndActive = !settings.get_boolean('show-banners');
                 }
                 
-                // If DND state changed, update all sources
                 if (wasDndActive !== this._isDndActive) {
                     this._updateAllSources();
                 }
             } catch (error) {
                 console.error(`[TopbarNotificationIcons] Failed to update DND state: ${error.message}`);
-                // Fallback: assume DND is not active
                 this._isDndActive = false;
             }
         }
@@ -334,7 +280,6 @@ const TopbarNotification = GObject.registerClass(
         }
 
         _shouldShowInDND(source) {
-            // If DND is not active, always show
             if (!this._isDndActive) {
                 return true;
             }
@@ -342,11 +287,11 @@ const TopbarNotification = GObject.registerClass(
             const dndMode = this._settings.get_int('dnd-mode');
             
             switch (dndMode) {
-                case 0: // Always
+                case 0:
                     return true;
-                case 1: // Urgent only
+                case 1:
                     return this._isUrgentNotification(source);
-                case 2: // Never
+                case 2:
                     return false;
                 default:
                     return true;
@@ -359,18 +304,14 @@ const TopbarNotification = GObject.registerClass(
                     return false;
                 }
 
-                // Check if the source has any urgent notifications
                 if (source.notifications && source.notifications.length > 0) {
                     return source.notifications.some(notification => {
-                        // Check for HIGH (2) or CRITICAL (3) urgency notifications
                         if (notification._urgency === 2 || notification._urgency === 3) {
-                            return true; // High/Critical urgency - always show
+                            return true;
                         }
-                        
                         return false;
                     });
                 }
-
 
                 return false;
             } catch (error) {
@@ -420,7 +361,6 @@ const TopbarNotification = GObject.registerClass(
 
         destroy() {
             try {
-                // Disconnect message tray signals
                 if (this._signals) {
                     this._signals.forEach(signal => {
                         if (signal) {
@@ -430,7 +370,6 @@ const TopbarNotification = GObject.registerClass(
                     this._signals = [];
                 }
 
-                // Disconnect DND signals
                 if (this._dndSignals && this._dndSettings) {
                     this._dndSignals.forEach(signal => {
                         if (signal) {
@@ -441,9 +380,7 @@ const TopbarNotification = GObject.registerClass(
                     this._dndSettings = null;
                 }
 
-                // Clear icons map
                 this._icons.clear();
-
                 super.destroy();
             } catch (error) {
                 console.error(`[TopbarNotificationIcons] Failed to destroy widget: ${error.message}`);
@@ -451,5 +388,3 @@ const TopbarNotification = GObject.registerClass(
         }
     }
 );
-
-

@@ -5,7 +5,7 @@
   "url": "https://github.com/ans-ibrahim/notification-icons",
   "settings-schema": "org.gnome.shell.extensions.notification-icons",
   "shell-version": [
-    "45","46","47","48"
+    "46","47","48"
   ],
   "version": 999
 }
