@@ -16,7 +16,11 @@ A GNOME Shell extension that displays notification icons in the top panel, provi
 
 ## Installation
 
-### Quick Installation (Recommended)
+### From GNOME Extensions Website (Recommended)
+
+Install from [GNOME Shell extension page](https://extensions.gnome.org/extension/6248/top-panel-notification-icons-revived/)
+
+### Manual Installation
 
 Use the provided Makefile for easy installation:
 
@@ -29,9 +33,6 @@ make
 ```
 
 
-### From GNOME Extensions Website
-
-Install from [GNOME Shell extension page](https://extensions.gnome.org/extension/6248/top-panel-notification-icons-revived/)
 
 ## Configuration
 
