@@ -51,8 +51,7 @@ gnome-extensions prefs notification-icons@muhammad_ans.github
 
 ## Compatibility
 
-- GNOME Shell versions: 45, 46, 47, 48
-- Tested on GNOME 45+
+- GNOME Shell versions: 45 (Till Version 9), 46, 47, 48
 
 ## Development
 
