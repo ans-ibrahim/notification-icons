@@ -9,7 +9,6 @@ import {
 
 export default class NotificationIconsPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
-    // General Settings Page
     const generalPage = new Adw.PreferencesPage({
       title: _("General"),
       icon_name: "dialog-information-symbolic",
@@ -22,7 +21,6 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
     });
     generalPage.add(appearanceGroup);
 
-    // Icon Size Setting
     const iconSizeOptions = new Gtk.StringList();
     iconSizeOptions.append(_("Small (16px)"));
     iconSizeOptions.append(_("Medium (18px)"));
@@ -35,35 +33,30 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
     });
     appearanceGroup.add(iconSizeRow);
 
-    // Colored Icons Setting
     const coloredIconsRow = new Adw.SwitchRow({
       title: _("Colored Icons"),
       subtitle: _("Show colored icons instead of symbolic (monochrome) icons"),
     });
     appearanceGroup.add(coloredIconsRow);
 
-    // Position Settings Group
     const positionGroup = new Adw.PreferencesGroup({
       title: _("Position"),
       description: _("Configure where notification icons appear"),
     });
     generalPage.add(positionGroup);
 
-    // Right Side Setting
     const rightSideRow = new Adw.SwitchRow({
       title: _("Right Side"),
       subtitle: _("Show icons on the right side of the clock instead of left"),
     });
     positionGroup.add(rightSideRow);
 
-    // Behavior Settings Group
     const behaviorGroup = new Adw.PreferencesGroup({
       title: _("Behavior"),
       description: _("Configure how icons behave in different modes"),
     });
     generalPage.add(behaviorGroup);
 
-    // DND Mode Setting
     const dndOptions = new Gtk.StringList();
     dndOptions.append(_("Always Show"));
     dndOptions.append(_("Urgent Only"));
@@ -76,10 +69,8 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
     });
     behaviorGroup.add(dndRow);
 
-    // Bind settings
     window._settings = this.getSettings();
     
-    // Icon size binding (0=16px, 1=18px, 2=20px)
     window._settings.bind(
       "icon-size",
       iconSizeRow,
@@ -87,7 +78,6 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
       Gio.SettingsBindFlags.DEFAULT
     );
 
-    // Colored icons binding
     window._settings.bind(
       "colored-icons",
       coloredIconsRow,
@@ -95,7 +85,6 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
       Gio.SettingsBindFlags.DEFAULT
     );
 
-    // Right side binding
     window._settings.bind(
       "right-side",
       rightSideRow,
@@ -103,7 +92,6 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
       Gio.SettingsBindFlags.DEFAULT
     );
 
-    // DND mode binding
     window._settings.bind(
       "dnd-mode",
       dndRow,
