@@ -21,6 +21,12 @@
             <description>When enabled, notification icons will be displayed in their original colors. When disabled, they will be displayed as monochrome symbolic icons.</description>
         </key>
 
+        <key name="notification-count" type="b">
+            <default>false</default>
+            <summary>Display the number of unread notifications</summary>
+            <description>When enabled, a notification count badge is displayed on the bottom-right corner of the icon. When disabled, the badge is hidden.</description>
+        </key>
+
         <key name="right-side" type="b">
             <default>false</default>
             <summary>Show icons on the right side of the clock</summary>

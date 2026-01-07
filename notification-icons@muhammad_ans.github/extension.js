@@ -5,6 +5,52 @@ import St from 'gi://St';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+class Icon {
+    constructor(source, actualIconSize, iconName, coloredIcons, notificationCount) {
+        this._source = source;
+
+        this._mainWidget = new St.Widget({
+            layout_manager: new Clutter.BinLayout()
+        });
+
+        this._icon = new St.Icon({
+            icon_name: iconName,
+            icon_size: actualIconSize,
+            style_class: 'topbar-notification-icon',
+        });
+
+        if (!coloredIcons) {
+            this._icon.add_style_class_name('app-menu-icon');
+            this._icon.add_effect(new Clutter.DesaturateEffect());
+        }
+
+        this._mainWidget.add_child(this._icon);
+
+        if (notificationCount) {
+            this._signal = source.connect('notify::count', this._updateNotificationCount.bind(this));
+
+            this._badge = new St.Label({
+                style_class: 'notification-count',
+                text: this._getNotificationCount(),
+                x_align: Clutter.ActorAlign.END,
+                y_align: Clutter.ActorAlign.START
+            });
+
+            this._mainWidget.add_child(this._badge);
+        }
+    }
+
+    _getNotificationCount() {
+        const count = this._source.notifications ? this._source.notifications.length : 0;
+        return count > 0 ? count.toString() : '';
+    }
+
+    _updateNotificationCount() {
+        this._badge.text = this._getNotificationCount();
+    }
+}
+
+
 export default class TopbarNotificationIcons extends Extension {
     constructor(metadata) {
         super(metadata);
@@ -103,6 +149,7 @@ const TopbarNotification = GObject.registerClass(
             this._dndSignals = [];
             this._dndMode = this._settings.get_int('dnd-mode');
             this._coloredIcons = this._settings.get_boolean('colored-icons');
+            this._notificationCount = this._settings.get_boolean('notification-count');
             this._iconSize = this._settings.get_int('icon-size');
             this._isDndActive = false;
 
@@ -121,20 +168,33 @@ const TopbarNotification = GObject.registerClass(
         }
 
         _onSourceAdded(tray, source) {
-            if (!source || !source._policy) {
+            if (!source) {
+                console.log("no source");
                 return;
             }
+            console.log(`source: ${source}`);
+
+            if (!source._policy) {
+                console.log("no source policy");
+                return;
+            }
+            console.log(`source._policy: ${source._policy}`);
 
             const sourceId = source._policy.id;
 
             if (!this._shouldShowInDND(source)) {
+                console.log("!this._shouldShowInDND(source)");
                 return;
             }
+            console.log("this._shouldShowInDND(source)");
 
             if (!this._icons.has(sourceId)) {
+                console.log("!this._icons.has(sourceId)");
                 const icon = this._createIcon(source);
                 this._icons.set(sourceId, icon);
-                this.add_child(icon);
+                this.add_child(icon._mainWidget);
+            } else {
+                 console.log("this._icons.has(sourceId)");
             }
         }
 
@@ -147,7 +207,8 @@ const TopbarNotification = GObject.registerClass(
 
             const icon = this._icons.get(sourceId);
             if (icon) {
-                this.remove_child(icon);
+                this.remove_child(icon._widget);
+                this._destroyIcon(icon);
                 this._icons.delete(sourceId);
             }
         }
@@ -158,16 +219,7 @@ const TopbarNotification = GObject.registerClass(
 
             let iconName = this._getIconForSource(source);
 
-            const icon = new St.Icon({
-                icon_name: iconName,
-                icon_size: actualIconSize,
-                style_class: 'topbar-notification-icon',
-            });
-
-            if (!this._coloredIcons) {
-                icon.add_style_class_name('app-menu-icon');
-                icon.add_effect(new Clutter.DesaturateEffect());
-            }
+            const icon = new Icon(source, actualIconSize, iconName, this._coloredIcons, this._notificationCount);
 
 
             return icon;
@@ -270,15 +322,24 @@ const TopbarNotification = GObject.registerClass(
 
         _updateAllSources() {
             this.remove_all_children();
+            this._icons.forEach(icon => this._destroyIcon(icon));
             this._icons.clear();
 
             const sources = Main.messageTray.getSources();
             sources.forEach(source => this._onSourceAdded(null, source));
         }
 
+        _destroyIcon(icon) {
+            if (icon._signal) {
+                icon._source.disconnect(icon._signal);
+            }
+            icon._widget.destroy();
+        }
+
         updateSettings() {
             const newDndMode = this._settings.get_int('dnd-mode');
             const newColoredIcons = this._settings.get_boolean('colored-icons');
+            const newNotificationCount = this._settings.get_boolean('notification-count')
             const newIconSize = this._settings.get_int('icon-size');
 
             let needsUpdate = false;
@@ -323,6 +384,7 @@ const TopbarNotification = GObject.registerClass(
                 this._dndSettings = null;
             }
 
+            this._icons.forEach(icon => this._destroyIcon(icon));
             this._icons.clear();
             super.destroy();
         }

@@ -39,6 +39,12 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
         });
         appearanceGroup.add(coloredIconsRow);
 
+        const notificationCountRow = new Adw.SwitchRow({
+            title: _("Count Badge"),
+            subtitle: _("Display the number of unread notifications"),
+        });
+        appearanceGroup.add(notificationCountRow);
+
         const positionGroup = new Adw.PreferencesGroup({
             title: _("Position"),
             description: _("Configure where notification icons appear"),
@@ -75,6 +81,13 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
             "icon-size",
             iconSizeRow,
             "selected",
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        window._settings.bind(
+            "notification-count",
+            notificationCountRow,
+            "active",
             Gio.SettingsBindFlags.DEFAULT
         );
 
