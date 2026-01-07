@@ -288,8 +288,12 @@ const TopbarNotification = GObject.registerClass(
                 needsUpdate = true;
             }
 
-            if (newColoredIcons !== this._coloredIcons || newIconSize !== this._iconSize) {
+            if (newColoredIcons !== this._coloredIcons) {
                 this._coloredIcons = newColoredIcons;
+                needsUpdate = true;
+            }
+
+            if (newIconSize !== this._iconSize) {
                 this._iconSize = newIconSize;
                 needsUpdate = true;
             }
