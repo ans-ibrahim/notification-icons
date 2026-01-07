@@ -17,7 +17,7 @@ export default class TopbarNotificationIcons extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._topbarNotification = new TopbarNotification(this._settings);
-        
+
         this._signals = [
             this._settings.connect('changed::right-side', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::colored-icons', this._onSettingsChanged.bind(this)),
@@ -61,7 +61,7 @@ export default class TopbarNotificationIcons extends Extension {
 
         const rightSide = this._settings.get_boolean('right-side');
         const container = dateMenu.get_first_child();
-        
+
         if (rightSide) {
             container.insert_child_above(this._topbarNotification, dateMenu._clockDisplay);
         } else {
@@ -77,9 +77,9 @@ export default class TopbarNotificationIcons extends Extension {
 
         const rightSide = this._settings.get_boolean('right-side');
         const container = dateMenu.get_first_child();
-        
+
         container.remove_child(this._topbarNotification);
-        
+
         if (rightSide) {
             container.insert_child_above(this._topbarNotification, dateMenu._clockDisplay);
         } else {
@@ -127,7 +127,7 @@ const TopbarNotification = GObject.registerClass(
             }
 
             const sourceId = source._policy.id;
-            
+
             if (!this._shouldShowInDND(source)) {
                 return;
             }
@@ -145,7 +145,7 @@ const TopbarNotification = GObject.registerClass(
             }
 
             const sourceId = source._policy.id;
-            
+
             const icon = this._icons.get(sourceId);
             if (icon) {
                 this.remove_child(icon);
@@ -156,9 +156,9 @@ const TopbarNotification = GObject.registerClass(
         _createIcon(source) {
             const iconSizeMap = [16, 18, 20];
             const actualIconSize = iconSizeMap[this._iconSize] || 18;
-            
+
             let iconName = this._getIconForSource(source);
-            
+
             const icon = new St.Icon({
                 icon_name: iconName,
                 icon_size: actualIconSize,
@@ -177,53 +177,53 @@ const TopbarNotification = GObject.registerClass(
         _getIconForSource(source) {
             if (source.notifications && source.notifications.length > 0) {
                 const notification = source.notifications[0];
-                
+
                 if (notification.gicon) {
                     if (notification.gicon instanceof Gio.ThemedIcon) {
                         return notification.gicon.get_names()[0];
                     }
                 }
-                
+
                 if (notification.iconName) {
                     return notification.iconName;
                 }
             }
-            
+
             if (source.icon) {
                 if (source.icon instanceof Gio.ThemedIcon) {
                     return source.icon.get_names()[0];
                 }
             }
-            
+
             if (source.iconName) {
                 return source.iconName;
             }
-            
+
             return 'notification-symbolic';
         }
 
 
         _monitorDndState() {
             const settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.notifications' });
-            
+
             this._dndSignals = [
                 settings.connect('changed::show-banners', this._onDndStateChanged.bind(this))
             ];
-            
+
             this._dndSettings = settings;
             this._updateDndState();
         }
 
         _updateDndState() {
             const wasDndActive = this._isDndActive;
-            
+
             if (this._dndSettings) {
                 this._isDndActive = !this._dndSettings.get_boolean('show-banners');
             } else {
                 const settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.notifications' });
                 this._isDndActive = !settings.get_boolean('show-banners');
             }
-            
+
             if (wasDndActive !== this._isDndActive) {
                 this._updateAllSources();
             }
@@ -239,7 +239,7 @@ const TopbarNotification = GObject.registerClass(
             }
 
             const dndMode = this._settings.get_int('dnd-mode');
-            
+
             switch (dndMode) {
                 case 0:
                     return true;
