@@ -45,13 +45,14 @@ gnome-extensions prefs notification-icons@muhammad_ans.github
 
 - **Icon Size**: Choose the size of notification icons (Small/Medium/Large)
 - **Colored Icons**: Toggle between colored and symbolic icons
+- **Notification Count**: Displays the number of unread notifications
 - **Right Side**: Position icons on the right side of the clock
 - **Do Not Disturb Mode**: Control icon visibility when DND is active
 
 
 ## Compatibility
 
-- GNOME Shell versions: 45 (Till Version 9), 46, 47, 48
+- GNOME Shell versions: 45 (Till Version 9), 46, 47, 48, 49
 
 ## Development
 
