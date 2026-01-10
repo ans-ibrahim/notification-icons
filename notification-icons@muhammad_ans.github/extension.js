@@ -106,6 +106,8 @@ const TopbarNotification = GObject.registerClass(
             this._coloredIcons = this._settings.get_boolean('colored-icons');
             this._iconSize = this._settings.get_int('icon-size');
             this._isDndActive = false;
+            this._sourceIdCounter = 0;
+            this._sourceIdMap = new WeakMap();
 
             this._connectSignals();
             this._updateDndState();
@@ -121,34 +123,53 @@ const TopbarNotification = GObject.registerClass(
             this._monitorDndState();
         }
 
+        _getSourceId(source) {
+            if (source._policy && source._policy.id) {
+                return `policy:${source._policy.id}`;
+            }
+
+            if (source.app && source.app.get_id) {
+                return `app:${source.app.get_id()}`;
+            }
+
+            if (source.title) {
+                return `title:${source.title}`;
+            }
+
+            if (!this._sourceIdMap.has(source)) {
+                this._sourceIdMap.set(source, `generated:${this._sourceIdCounter++}`);
+            }
+            return this._sourceIdMap.get(source);
+        }
+
         _onSourceAdded(tray, source) {
-            if (!source || !source._policy) {
+            if (!source) {
                 return;
             }
 
-            const sourceId = source._policy.id;
-            
+            const sourceId = this._getSourceId(source);
+
             if (!this._shouldShowInDND(source)) {
                 return;
             }
 
             if (!this._icons.has(sourceId)) {
                 const icon = this._createIcon(source);
-                this._icons.set(sourceId, icon);
+                this._icons.set(sourceId, { icon, source });
                 this.add_child(icon);
             }
         }
 
         _onSourceRemoved(tray, source) {
-            if (!source || !source._policy) {
+            if (!source) {
                 return;
             }
 
-            const sourceId = source._policy.id;
-            
-            const icon = this._icons.get(sourceId);
-            if (icon) {
-                this.remove_child(icon);
+            const sourceId = this._getSourceId(source);
+
+            const entry = this._icons.get(sourceId);
+            if (entry) {
+                this.remove_child(entry.icon);
                 this._icons.delete(sourceId);
             }
         }
@@ -156,15 +177,24 @@ const TopbarNotification = GObject.registerClass(
         _createIcon(source) {
             const iconSizeMap = [16, 18, 20];
             const actualIconSize = iconSizeMap[this._iconSize] || 18;
-            
-            let iconName = this._getIconForSource(source);
-            
+
+            let gicon = this._getGIconForSource(source);
+            let iconName = null;
+
+            if (!gicon) {
+                iconName = this._getIconNameForSource(source);
+            }
+
             const icon = new St.Icon({
-                icon_name: iconName,
                 icon_size: actualIconSize,
                 style_class: 'topbar-notification-icon',
             });
 
+            if (gicon) {
+                icon.gicon = gicon;
+            } else {
+                icon.icon_name = iconName || 'notification-symbolic';
+            }
             if (!this._coloredIcons) {
                 icon.add_style_class_name('app-menu-icon');
                 icon.add_effect(new Clutter.DesaturateEffect());
@@ -174,31 +204,72 @@ const TopbarNotification = GObject.registerClass(
             return icon;
         }
 
-        _getIconForSource(source) {
+        _getGIconForSource(source) {
             if (source.notifications && source.notifications.length > 0) {
-                const notification = source.notifications[0];
-                
-                if (notification.gicon) {
-                    if (notification.gicon instanceof Gio.ThemedIcon) {
-                        return notification.gicon.get_names()[0];
+                for (const notification of source.notifications) {
+                    if (notification.gicon) {
+                        return notification.gicon;
                     }
                 }
-                
-                if (notification.iconName) {
-                    return notification.iconName;
+            }
+
+            if (source.icon && source.icon instanceof Gio.Icon) {
+                return source.icon;
+            }
+
+            if (source.app && source.app.get_icon) {
+                const appIcon = source.app.get_icon();
+                if (appIcon) {
+                    return appIcon;
+                }
+            }
+
+            if (source.gicon && source.gicon instanceof Gio.Icon) {
+                return source.gicon;
+            }
+
+            return null;
+        }
+
+        _getIconNameForSource(source) {
+            if (source.notifications && source.notifications.length > 0) {
+                for (const notification of source.notifications) {
+                    if (notification.gicon && notification.gicon instanceof Gio.ThemedIcon) {
+                        const names = notification.gicon.get_names();
+                        if (names && names.length > 0) {
+                            return names[0];
+                        }
+                    }
+
+                    if (notification.iconName) {
+                        return notification.iconName;
+                    }
                 }
             }
             
-            if (source.icon) {
-                if (source.icon instanceof Gio.ThemedIcon) {
-                    return source.icon.get_names()[0];
+            if (source.icon && source.icon instanceof Gio.ThemedIcon) {
+                const names = source.icon.get_names();
+                if (names && names.length > 0) {
+                    return names[0];
                 }
             }
-            
             if (source.iconName) {
                 return source.iconName;
             }
             
+            if (source.app && source.app.get_id) {
+                const appId = source.app.get_id();
+                if (appId) {
+                    const iconName = appId.replace(/\.desktop$/, '');
+                    return iconName;
+                }
+            }
+
+            if (source.title) {
+                const lowerTitle = source.title.toLowerCase().replace(/\s+/g, '-');
+                return lowerTitle;
+            }
+
             return 'notification-symbolic';
         }
 
@@ -253,13 +324,17 @@ const TopbarNotification = GObject.registerClass(
         }
 
         _isUrgentNotification(source) {
-            if (!source || !source._policy) {
+            if (!source) {
                 return false;
             }
 
             if (source.notifications && source.notifications.length > 0) {
                 return source.notifications.some(notification => {
                     if (notification._urgency === 2 || notification._urgency === 3) {
+                        return true;
+                    }
+                    if (notification.urgency === MessageTray.Urgency.CRITICAL ||
+                        notification.urgency === MessageTray.Urgency.HIGH) {
                         return true;
                     }
                     return false;
