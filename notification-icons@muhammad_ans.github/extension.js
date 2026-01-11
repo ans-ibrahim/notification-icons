@@ -9,7 +9,7 @@ class Icon {
     constructor(source, actualIconSize, iconName, coloredIcons, notificationCount) {
         this._source = source;
 
-        this._mainWidget = new St.Widget({
+        this._widget = new St.Widget({
             layout_manager: new Clutter.BinLayout()
         });
 
@@ -24,7 +24,7 @@ class Icon {
             this._icon.add_effect(new Clutter.DesaturateEffect());
         }
 
-        this._mainWidget.add_child(this._icon);
+        this._widget.add_child(this._icon);
 
         if (notificationCount) {
             this._signal = source.connect('notify::count', this._updateNotificationCount.bind(this));
@@ -36,7 +36,7 @@ class Icon {
                 y_align: Clutter.ActorAlign.START
             });
 
-            this._mainWidget.add_child(this._badge);
+            this._widget.add_child(this._badge);
         }
     }
 
@@ -192,7 +192,7 @@ const TopbarNotification = GObject.registerClass(
                 console.log("!this._icons.has(sourceId)");
                 const icon = this._createIcon(source);
                 this._icons.set(sourceId, icon);
-                this.add_child(icon._mainWidget);
+                this.add_child(icon._widget);
             } else {
                  console.log("this._icons.has(sourceId)");
             }
