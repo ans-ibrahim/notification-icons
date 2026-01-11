@@ -67,6 +67,7 @@ export default class TopbarNotificationIcons extends Extension {
             this._settings.connect('changed::right-side', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::colored-icons', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::dnd-mode', this._onSettingsChanged.bind(this)),
+            this._settings.connect('changed::notification-count', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::icon-size', this._onSettingsChanged.bind(this)),
         ];
 
