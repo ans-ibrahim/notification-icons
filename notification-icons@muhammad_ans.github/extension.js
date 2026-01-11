@@ -170,32 +170,23 @@ const TopbarNotification = GObject.registerClass(
 
         _onSourceAdded(tray, source) {
             if (!source) {
-                console.log("no source");
                 return;
             }
-            console.log(`source: ${source}`);
 
             if (!source._policy) {
-                console.log("no source policy");
                 return;
             }
-            console.log(`source._policy: ${source._policy}`);
 
             const sourceId = source._policy.id;
 
             if (!this._shouldShowInDND(source)) {
-                console.log("!this._shouldShowInDND(source)");
                 return;
             }
-            console.log("this._shouldShowInDND(source)");
 
             if (!this._icons.has(sourceId)) {
-                console.log("!this._icons.has(sourceId)");
                 const icon = this._createIcon(source);
                 this._icons.set(sourceId, icon);
                 this.add_child(icon._widget);
-            } else {
-                 console.log("this._icons.has(sourceId)");
             }
         }
 
