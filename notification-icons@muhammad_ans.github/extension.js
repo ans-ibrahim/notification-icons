@@ -354,6 +354,11 @@ const TopbarNotification = GObject.registerClass(
                 needsUpdate = true;
             }
 
+            if (newNotificationCount !== this._notificationCount) {
+                this._notificationCount = newNotificationCount;
+                needsUpdate = true;
+            }
+
             if (newIconSize !== this._iconSize) {
                 this._iconSize = newIconSize;
                 needsUpdate = true;
