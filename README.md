@@ -5,6 +5,7 @@ A GNOME Shell extension that displays notification icons in the top panel, provi
 ## Features
 
 - **Notification Icons**: Shows icons for active notification sources in the top panel
+- **Notification Count**: Displays the number of unread notifications
 - **Configurable Position**: Place icons on the left or right side of the clock
 - **Icon Styling**: Toggle between colored and symbolic (monochrome) icons
 - **Icon Size**: Choose from small (16px), medium (18px), or large (20px) icons
