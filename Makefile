@@ -27,4 +27,3 @@ install: compile-schemas
 	@mkdir -p $(EXTENSION_DIR)
 	@cp -r $(EXTENSION_NAME)/* $(EXTENSION_DIR)/
 	@echo "Extension installed to $(EXTENSION_DIR)"
-	

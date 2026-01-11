@@ -1,11 +1,14 @@
 {
-  "name": "Top Panel Notification Icons Revived",
-  "description": "Displays notifications icon in top panel",
-  "uuid": "notification-icons@muhammad_ans.github",
-  "url": "https://github.com/ans-ibrahim/notification-icons",
-  "settings-schema": "org.gnome.shell.extensions.notification-icons",
-  "shell-version": [
-    "46","47","48","49"
-  ],
-  "version": 999
+    "description": "Displays notifications icon in top panel",
+    "name": "Top Panel Notification Icons Revived",
+    "settings-schema": "org.gnome.shell.extensions.notification-icons",
+    "shell-version": [
+        "46",
+        "47",
+        "48",
+        "49"
+    ],
+    "url": "https://github.com/ans-ibrahim/notification-icons",
+    "uuid": "notification-icons@muhammad_ans.github",
+    "version": 13
 }
