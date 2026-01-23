@@ -45,6 +45,12 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
         });
         appearanceGroup.add(notificationCountRow);
 
+        const hideCountWhenOneRow = new Adw.SwitchRow({
+            title: _("Hide Single Count"),
+            subtitle: _("Hide the badge when there is exactly one notification"),
+        });
+        appearanceGroup.add(hideCountWhenOneRow);
+
         const positionGroup = new Adw.PreferencesGroup({
             title: _("Position"),
             description: _("Configure where notification icons appear"),
@@ -88,6 +94,20 @@ export default class NotificationIconsPreferences extends ExtensionPreferences {
             "notification-count",
             notificationCountRow,
             "active",
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        window._settings.bind(
+            "hide-count-when-one",
+            hideCountWhenOneRow,
+            "active",
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        window._settings.bind(
+            "notification-count",
+            hideCountWhenOneRow,
+            "sensitive",
             Gio.SettingsBindFlags.DEFAULT
         );
 

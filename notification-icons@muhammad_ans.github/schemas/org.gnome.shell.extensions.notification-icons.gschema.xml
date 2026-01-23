@@ -27,6 +27,12 @@
             <description>When enabled, a notification count badge is displayed on the bottom-right corner of the icon. When disabled, the badge is hidden.</description>
         </key>
 
+        <key name="hide-count-when-one" type="b">
+            <default>false</default>
+            <summary>Hide the badge when there is exactly one notification</summary>
+            <description>When enabled, the notification count badge is hidden if there is only one notification.</description>
+        </key>
+
         <key name="right-side" type="b">
             <default>false</default>
             <summary>Show icons on the right side of the clock</summary>

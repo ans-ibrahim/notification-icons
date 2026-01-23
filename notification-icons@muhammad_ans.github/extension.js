@@ -7,8 +7,9 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 class Icon {
-    constructor(source, actualIconSize, gicon, iconName, coloredIcons, notificationCount) {
+    constructor(source, actualIconSize, gicon, iconName, coloredIcons, notificationCount, hideCountWhenOne) {
         this._source = source;
+        this._hideCountWhenOne = hideCountWhenOne;
 
         this._widget = new St.Widget({
             layout_manager: new Clutter.BinLayout()
@@ -41,6 +42,7 @@ class Icon {
                 x_align: Clutter.ActorAlign.END,
                 y_align: Clutter.ActorAlign.START
             });
+            this._badge.visible = this._badge.text !== '';
 
             this._widget.add_child(this._badge);
         }
@@ -48,11 +50,15 @@ class Icon {
 
     _getNotificationCount() {
         const count = this._source.notifications ? this._source.notifications.length : 0;
+        if (this._hideCountWhenOne) {
+            return count > 1 ? count.toString() : '';
+        }
         return count > 0 ? count.toString() : '';
     }
 
     _updateNotificationCount() {
         this._badge.text = this._getNotificationCount();
+        this._badge.visible = this._badge.text !== '';
     }
 }
 
@@ -74,6 +80,7 @@ export default class TopbarNotificationIcons extends Extension {
             this._settings.connect('changed::colored-icons', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::dnd-mode', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::notification-count', this._onSettingsChanged.bind(this)),
+            this._settings.connect('changed::hide-count-when-one', this._onSettingsChanged.bind(this)),
             this._settings.connect('changed::icon-size', this._onSettingsChanged.bind(this)),
         ];
 
@@ -157,6 +164,7 @@ const TopbarNotification = GObject.registerClass(
             this._dndMode = this._settings.get_int('dnd-mode');
             this._coloredIcons = this._settings.get_boolean('colored-icons');
             this._notificationCount = this._settings.get_boolean('notification-count');
+            this._hideCountWhenOne = this._settings.get_boolean('hide-count-when-one');
             this._iconSize = this._settings.get_int('icon-size');
             this._isDndActive = false;
             this._sourceIdCounter = 0;
@@ -240,7 +248,8 @@ const TopbarNotification = GObject.registerClass(
                 gicon,
                 iconName,
                 this._coloredIcons,
-                this._notificationCount
+                this._notificationCount,
+                this._hideCountWhenOne
             );
 
             return icon;
@@ -406,6 +415,7 @@ const TopbarNotification = GObject.registerClass(
             const newDndMode = this._settings.get_int('dnd-mode');
             const newColoredIcons = this._settings.get_boolean('colored-icons');
             const newNotificationCount = this._settings.get_boolean('notification-count')
+            const newHideCountWhenOne = this._settings.get_boolean('hide-count-when-one');
             const newIconSize = this._settings.get_int('icon-size');
 
             let needsUpdate = false;
@@ -422,6 +432,11 @@ const TopbarNotification = GObject.registerClass(
 
             if (newNotificationCount !== this._notificationCount) {
                 this._notificationCount = newNotificationCount;
+                needsUpdate = true;
+            }
+
+            if (newHideCountWhenOne !== this._hideCountWhenOne) {
+                this._hideCountWhenOne = newHideCountWhenOne;
                 needsUpdate = true;
             }
 
