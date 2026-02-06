@@ -256,16 +256,16 @@ const TopbarNotification = GObject.registerClass(
         }
 
         _getGIconForSource(source) {
+            if (source.icon && source.icon instanceof Gio.Icon) {
+                return source.icon;
+            }
+
             if (source.notifications && source.notifications.length > 0) {
                 for (const notification of source.notifications) {
                     if (notification.gicon) {
                         return notification.gicon;
                     }
                 }
-            }
-
-            if (source.icon && source.icon instanceof Gio.Icon) {
-                return source.icon;
             }
 
             if (source.app && source.app.get_icon) {
