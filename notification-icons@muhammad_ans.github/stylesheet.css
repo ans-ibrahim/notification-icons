@@ -3,6 +3,10 @@
     spacing: 2px;
 }
 
+.topbar-notification-icon.symbolic-notification-icon {
+    -st-icon-style: symbolic;
+}
+
 .topbar-notification-icon {
     padding: 3px;
     margin: 0;

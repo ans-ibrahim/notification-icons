@@ -18,15 +18,14 @@ class Icon {
         this._icon = new St.Icon({
             icon_size: actualIconSize,
             style_class: 'topbar-notification-icon',
+            fallback_icon_name: 'application-x-executable-symbolic',
         });
 
-        if (gicon) {
-            this._icon.gicon = gicon;
-        } else {
-            this._icon.icon_name = iconName || 'notification-symbolic';
-        }
+        this.update(gicon, iconName);
 
         if (!coloredIcons) {
+            // prefer the theme's symbolic variant; desaturate whatever has none
+            this._icon.add_style_class_name('symbolic-notification-icon');
             this._icon.add_style_class_name('app-menu-icon');
             this._icon.add_effect(new Clutter.DesaturateEffect());
         }
@@ -45,6 +44,14 @@ class Icon {
             this._badge.visible = this._badge.text !== '';
 
             this._widget.add_child(this._badge);
+        }
+    }
+
+    update(gicon, iconName) {
+        if (gicon) {
+            this._icon.gicon = gicon;
+        } else {
+            this._icon.icon_name = iconName || 'notification-symbolic';
         }
     }
 
@@ -252,32 +259,32 @@ const TopbarNotification = GObject.registerClass(
                 this._hideCountWhenOne
             );
 
+            // source-added fires before the first notification exists, so re-pick then
+            icon._addedSignal = source.connect('notification-added', () => {
+                const g = this._getGIconForSource(source);
+                icon.update(g, g ? null : this._getIconNameForSource(source));
+            });
+
             return icon;
         }
 
         _getGIconForSource(source) {
-            if (source.icon && source.icon instanceof Gio.Icon) {
+            if (source.icon instanceof Gio.Icon)
                 return source.icon;
-            }
 
-            if (source.notifications && source.notifications.length > 0) {
-                for (const notification of source.notifications) {
-                    if (notification.gicon) {
-                        return notification.gicon;
-                    }
-                }
+            for (const notification of source.notifications ?? []) {
+                if (notification.gicon)
+                    return notification.gicon;
             }
 
             if (source.app && source.app.get_icon) {
                 const appIcon = source.app.get_icon();
-                if (appIcon) {
+                if (appIcon)
                     return appIcon;
-                }
             }
 
-            if (source.gicon && source.gicon instanceof Gio.Icon) {
+            if (source.gicon instanceof Gio.Icon)
                 return source.gicon;
-            }
 
             return null;
         }
@@ -407,6 +414,9 @@ const TopbarNotification = GObject.registerClass(
         _destroyIcon(icon) {
             if (icon._signal) {
                 icon._source.disconnect(icon._signal);
+            }
+            if (icon._addedSignal) {
+                icon._source.disconnect(icon._addedSignal);
             }
             icon._widget.destroy();
         }
